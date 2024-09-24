@@ -1,23 +1,70 @@
 const express = require('express')
 const app = express()
+const User = require('./models/User')
 
-// serve a static website
-app.use("/static", express.static("public"))
+// parsing middleware
+app.use( express.json() );
 
-// serve a dynamic endpoint with text
-app.get("/text", (req, res) => {
-    const msg = `This was a ${req.method} request from a browser.`
-    res.send(msg)
+// request contains JSON for a new user
+// we need to put it in the databasre
+app.post("/users", async (req, res, next) => {
+    try {
+        const user = await User.create( req.body );
+        res.json(user);
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
 })
 
-// serve some data in JSON
-app.get("/data", (req, res) => {
-    const data = {
-        method: req.method,
-        num: Math.random(),
-        str: "Hello, world"
-    };
-    res.json(data);
+app.get("/users", async (req, res, next) => {
+    try {
+        const users = await User.findAll();
+        res.json(users);
+    } catch(error) {
+        console.error(error);
+        next(error);
+    }
 })
 
+// GET /users/alan_t
+app.get("/users/:username", async (req, res, next) => {
+    try {
+        const user = await User.findOne({
+            where: {username: req.params.username}
+        })
+        res.json(user);
+    } catch(error) {
+        console.error(error);
+        next(error);
+    }
+})
+
+// PUT /users/alan_t
+app.put("/users/:username", async (req, res, next) => {
+    try {
+        let user = await User.findOne({
+            where: {username: req.params.username}
+        })
+        user = await user.update(req.body);
+        res.json(user);
+    } catch(error) {
+        console.error(error);
+        next(error);
+    }
+})
+
+// DELETE /users/:username
+app.delete("/users/:username", async (req, res, next) => {
+    try {
+        let user = await User.findOne({
+            where: {username: req.params.username}
+        })
+        user = await user.destroy();
+        res.json(user);
+    } catch(error) {
+        console.error(error);
+        next(error);
+    }
+})
 module.exports = app
